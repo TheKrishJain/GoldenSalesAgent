@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Mic, MicOff } from 'lucide-react';
 import { buildSystemPromptWithLang } from './toasters';
+import './App.css';
 
 // ─────────────────────────────────────────────────────────
 // Language config
@@ -118,24 +119,35 @@ class AudioPlayer {
 // ─────────────────────────────────────────────────────────
 function Avatar({ speaking, listening }: { speaking: boolean; listening: boolean }) {
   return (
-    <div className={`w-20 h-20 rounded-full border-2 border-white shadow-xl
-        bg-gradient-to-tr from-pink-100 to-rose-200 flex items-center justify-center shrink-0 transition-all duration-300
-        ${speaking  ? 'shadow-[0_0_20px_rgba(255,255,255,0.6)]' : ''}
-        ${listening ? 'shadow-[0_0_20px_rgba(56,189,248,0.6)]' : ''}`}>
-      <svg className="w-14 h-14 mt-1" viewBox="0 0 100 100" fill="none">
-        <path d="M20 50C20 28 32 20 50 20S80 28 80 50c0 10-4 20-10 20-6 0-2-15-20-15S36 70 30 70c-6 0-10-10-10-20Z" fill="#5c3f30"/>
-        <circle cx="50" cy="52" r="22" fill="#fed7aa"/>
-        <path d="M28 42c7-10 17-7 22-4 5-3 15-6 22 4 3 4 1-12-22-14C27 30 25 46 28 42Z" fill="#78350f"/>
-        <circle cx="43" cy="52" r="2" fill="#1e293b"/>
-        <circle cx="57" cy="52" r="2" fill="#1e293b"/>
-        <circle cx="39" cy="56" r="3" fill="#f43f5e" fillOpacity=".4"/>
-        <circle cx="61" cy="56" r="3" fill="#f43f5e" fillOpacity=".4"/>
-        {speaking
-          ? <path d="M47 58c0 3 6 3 6 0H47Z" fill="#881337" stroke="#881337" strokeWidth="1.5" strokeLinecap="round"/>
-          : <path d="M46 58c2 2 6 2 8 0" stroke="#881337" strokeWidth="2.5" strokeLinecap="round"/>}
-        <rect x="22" y="47" width="6" height="12" rx="3" fill="#0f172a"/>
-        <rect x="72" y="47" width="6" height="12" rx="3" fill="#0f172a"/>
-      </svg>
+    <div className="relative flex items-center justify-center" style={{ width: 280, height: 380 }}>
+      {/* Ripple rings when speaking */}
+      {speaking && (
+        <>
+          <div className="speaking-ring-1 absolute inset-0 rounded-full border-2 border-white/40" />
+          <div className="speaking-ring-2 absolute inset-0 rounded-full border-2 border-white/30" />
+          <div className="speaking-ring-3 absolute inset-0 rounded-full border-2 border-white/20" />
+        </>
+      )}
+      {/* Glow ring when listening */}
+      {listening && (
+        <div className="listening-ring absolute inset-0 rounded-full border-2 border-sky-300/60" />
+      )}
+      {/* Woman image */}
+      <div
+        className={`avatar-float relative overflow-hidden rounded-full border-4 border-white/30 shadow-2xl`}
+        style={{ width: 260, height: 360, boxShadow: speaking ? '0 0 40px rgba(255,255,255,0.4)' : '0 20px 60px rgba(0,0,0,0.3)' }}
+      >
+        <img
+          src="/maya.png"
+          alt="Maya"
+          className="w-full h-full object-cover object-top"
+          style={{ filter: speaking ? 'brightness(1.05)' : 'brightness(1)' }}
+        />
+        {/* Speaking overlay shimmer */}
+        {speaking && (
+          <div className="absolute inset-0 bg-gradient-to-t from-white/10 to-transparent" />
+        )}
+      </div>
     </div>
   );
 }
@@ -187,7 +199,7 @@ export default function App() {
   const [langIdx,  setLangIdx]  = useState(0); // 0 = Auto-detect (default)
   const [phase,    setPhaseS]   = useState<Phase>('idle');
   const [status,   setStatus]   = useState('TAP TO START');
-  const [subtitle, setSubtitle] = useState('');
+  const [_subtitle, setSubtitle] = useState<string>('');
   const [detectedLang, setDetectedLang] = useState('');  // shown when auto mode is active
 
   // Refs that survive re-renders without causing them
@@ -563,12 +575,14 @@ export default function App() {
   const isConnecting = phase === 'connecting';
   const isProcessing = phase === 'processing';
   const isIdle       = phase === 'idle';
+  const isSpeaking   = phase === 'speaking';
 
   return (
-    <div className="w-screen h-screen bg-[#FF0000] flex flex-col items-center justify-center gap-5 select-none overflow-hidden relative">
+    <div className="w-screen h-screen bg-[#FF0000] flex flex-col items-center justify-between select-none overflow-hidden relative" style={{ paddingTop: 20, paddingBottom: 36 }}>
 
-      {/* Language dropdown + detected language badge */}
-      <div className="absolute top-5 z-10 flex items-center gap-2">
+      {/* TOP BAR */}
+      <div className="w-full flex items-center justify-between px-6 z-10">
+        {/* Language dropdown - top left */}
         <div className="relative">
           <select
             value={langIdx}
@@ -587,63 +601,64 @@ export default function App() {
             </svg>
           </div>
         </div>
-        {/* Show detected language when auto mode is on (hide if English) */}
-        {langIdx === 0 && detectedLang && detectedLang !== 'English' && (
-          <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm border border-white/40 rounded-full px-3 py-1">
-            <span className="text-[9px] text-white/70 font-bold uppercase tracking-wider">DETECTED</span>
-            <span className="text-xs text-white font-black">{detectedLang}</span>
-          </div>
-        )}
+
+        {/* Detected language badge + End Chat - top right */}
+        <div className="flex items-center gap-3">
+          {langIdx === 0 && detectedLang && detectedLang !== 'English' && (
+            <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm border border-white/40 rounded-full px-3 py-1">
+              <span className="text-[9px] text-white/70 font-bold uppercase tracking-wider">DETECTED</span>
+              <span className="text-xs text-white font-black">{detectedLang}</span>
+            </div>
+          )}
+          {phase !== 'idle' && phase !== 'connecting' && (
+            <button
+              onClick={resetSession}
+              className="px-4 py-2 bg-black/30 hover:bg-black/50 text-white text-xs font-black tracking-widest rounded-full border border-white/50 transition-all backdrop-blur-sm"
+            >
+              END CHAT
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Transcripts on the left */}
-      <div className="absolute left-10 top-1/2 -translate-y-1/2 w-80 max-h-[80vh] overflow-hidden flex flex-col justify-center pointer-events-none">
-        {subtitle && (
-          <p className="text-white text-2xl font-semibold text-left leading-snug drop-shadow-lg bg-black/40 p-5 rounded-2xl backdrop-blur-md border border-white/20">
-            {subtitle}
-          </p>
-        )}
+      {/* MAIN: Woman avatar centred */}
+      <div className="flex-1 flex items-center justify-center">
+        <Avatar speaking={isSpeaking} listening={isListening} />
       </div>
 
-      {/* Avatar */}
-      <Avatar speaking={phase === 'speaking'} listening={isListening} />
+      {/* BOTTOM: Mic + status */}
+      <div className="flex flex-col items-center gap-3 z-10">
+        {/* Visualiser */}
+        <canvas ref={canvasRef} width={120} height={24} className="opacity-70" />
 
-      {/* Visualiser */}
-      <canvas ref={canvasRef} width={150} height={32} className="shrink-0" />
+        {/* Status label */}
+        <span className="text-[11px] font-black tracking-widest text-white/90 uppercase">{status}</span>
 
-      {/* Subtitles moved to the left */}
-
-      {/* Mic button */}
-      <div className="flex flex-col items-center gap-2 shrink-0">
+        {/* Mic button */}
         <button
           id="kiosk-mic-btn"
           onClick={handleTap}
           disabled={isConnecting || isProcessing}
-          className={`w-16 h-16 rounded-full border-2 border-white bg-transparent
+          className={`w-20 h-20 rounded-full border-2 border-white bg-transparent
             flex items-center justify-center transition-all duration-200
             active:scale-95 outline-none cursor-pointer
-            ${isListening  ? 'bg-sky-500/20 border-sky-400' : 'hover:bg-white/10'}
-            ${isConnecting || isProcessing ? 'opacity-40 cursor-not-allowed' : ''}
-            ${isIdle       ? 'animate-pulse' : ''}`}
+            ${isListening  ? 'border-sky-300 bg-sky-500/20' : ''}
+            ${isConnecting || isProcessing ? 'opacity-40 cursor-not-allowed' : ''}`}
+          style={{
+            boxShadow: isIdle ? undefined : isListening ? '0 0 20px rgba(56,189,248,0.5)' : isSpeaking ? '0 0 20px rgba(255,255,255,0.3)' : undefined
+          }}
         >
-          {isListening
-            ? <MicOff className="w-7 h-7 text-sky-300" />
-            : <Mic    className="w-7 h-7 text-white" />}
+          {isProcessing
+            ? <svg className="processing-spinner w-8 h-8 text-white" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              </svg>
+            : isListening
+              ? <MicOff className="w-8 h-8 text-sky-200" />
+              : <Mic className={`w-8 h-8 text-white ${isIdle ? 'mic-idle' : ''}`} />
+          }
         </button>
-        <span className="text-[10px] font-black tracking-widest text-white uppercase">
-          {status}
-        </span>
       </div>
-
-      {/* End Chat Button */}
-      {phase !== 'idle' && phase !== 'connecting' && (
-        <button
-          onClick={resetSession}
-          className="absolute top-5 right-5 px-4 py-2 bg-black/30 hover:bg-black/50 text-white text-xs font-black tracking-widest rounded-full border border-white/50 transition-all backdrop-blur-sm z-10"
-        >
-          END CHAT
-        </button>
-      )}
 
     </div>
   );
