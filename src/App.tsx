@@ -119,35 +119,33 @@ class AudioPlayer {
 // ─────────────────────────────────────────────────────────
 function Avatar({ speaking, listening }: { speaking: boolean; listening: boolean }) {
   return (
-    <div className="relative flex items-center justify-center" style={{ width: 280, height: 380 }}>
-      {/* Ripple rings when speaking */}
+    <div className="relative flex items-end justify-center" style={{ width: 200, height: 300 }}>
+      {/* Ripple rings under/around the image when speaking */}
       {speaking && (
         <>
-          <div className="speaking-ring-1 absolute inset-0 rounded-full border-2 border-white/40" />
-          <div className="speaking-ring-2 absolute inset-0 rounded-full border-2 border-white/30" />
-          <div className="speaking-ring-3 absolute inset-0 rounded-full border-2 border-white/20" />
+          <div className="speaking-ring-1 absolute bottom-0 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full border-2 border-white/40" />
+          <div className="speaking-ring-2 absolute bottom-0 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full border-2 border-white/30" />
+          <div className="speaking-ring-3 absolute bottom-0 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full border-2 border-white/20" />
         </>
       )}
       {/* Glow ring when listening */}
       {listening && (
-        <div className="listening-ring absolute inset-0 rounded-full border-2 border-sky-300/60" />
+        <div className="listening-ring absolute bottom-0 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full border-2 border-sky-300/60" />
       )}
-      {/* Woman image */}
-      <div
-        className={`avatar-float relative overflow-hidden rounded-full border-4 border-white/30 shadow-2xl`}
-        style={{ width: 260, height: 360, boxShadow: speaking ? '0 0 40px rgba(255,255,255,0.4)' : '0 20px 60px rgba(0,0,0,0.3)' }}
-      >
-        <img
-          src="/maya.png"
-          alt="Maya"
-          className="w-full h-full object-cover object-top"
-          style={{ filter: speaking ? 'brightness(1.05)' : 'brightness(1)' }}
-        />
-        {/* Speaking overlay shimmer */}
-        {speaking && (
-          <div className="absolute inset-0 bg-gradient-to-t from-white/10 to-transparent" />
-        )}
-      </div>
+      {/* Woman PNG image - no clip, shows naturally */}
+      <img
+        src="/maya.png"
+        alt="Maya"
+        className="avatar-float relative z-10"
+        style={{
+          width: 200,
+          height: 280,
+          objectFit: 'contain',
+          objectPosition: 'center bottom',
+          filter: speaking ? 'drop-shadow(0 0 20px rgba(255,255,255,0.5))' : 'drop-shadow(0 8px 24px rgba(0,0,0,0.3))',
+          transition: 'filter 0.3s ease',
+        }}
+      />
     </div>
   );
 }
