@@ -147,8 +147,7 @@ const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 const MODEL   = 'models/gemini-2.5-flash-native-audio-latest';
 
 function wsUrl() {
-  const p = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${p}//${window.location.host}/ws-api/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${API_KEY}`;
+  return `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${API_KEY}`;
 }
 
 function toB64(buf: ArrayBuffer) {
