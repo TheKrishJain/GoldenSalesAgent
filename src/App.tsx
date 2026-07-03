@@ -197,7 +197,7 @@ export default function App() {
   const [langIdx,  setLangIdx]  = useState(0); // 0 = Auto-detect (default)
   const [phase,    setPhaseS]   = useState<Phase>('idle');
   const [status,   setStatus]   = useState('TAP TO START');
-  const [_subtitle, setSubtitle] = useState<string>('');
+  const [subtitle,  setSubtitle]  = useState<string>('');
   const [detectedLang, setDetectedLang] = useState('');  // shown when auto mode is active
 
   // Refs that survive re-renders without causing them
@@ -324,6 +324,7 @@ export default function App() {
             systemInstruction: {
               parts: [{ text: buildSystemPromptWithLang(lang.instruction) }]
             },
+            outputAudioTranscription: {},
           }
         }));
       };
@@ -352,7 +353,7 @@ export default function App() {
             return;
           }
 
-          // Audio + text from Maya
+          // Audio from Maya
           const parts: any[] = msg.serverContent?.modelTurn?.parts ?? [];
           for (const p of parts) {
             if (p.inlineData?.data) {
@@ -364,13 +365,17 @@ export default function App() {
               player.current.enqueue(p.inlineData.data);
             }
             if (p.text) {
-              setSubtitle(prev => (prev + p.text).slice(-300));
-              if (subTimer.current) clearTimeout(subTimer.current);
               // In auto mode, detect and display which language Maya responded in
               if (langIdxRef.current === 0) {
                 setDetectedLang(detectLangFromText(p.text));
               }
             }
+          }
+
+          // Real-time English transcript from Gemini's built-in transcription
+          const transcript = msg.serverContent?.outputTranscription?.text;
+          if (transcript) {
+            setSubtitle(prev => (prev + transcript).slice(-400));
           }
         } catch (_) { /* ignore parse errors */ }
       };
@@ -619,8 +624,16 @@ export default function App() {
         </div>
       </div>
 
-      {/* MAIN: Woman avatar centred */}
-      <div className="flex-1 flex items-center justify-center">
+      {/* MAIN: Woman avatar centred + transcript on left */}
+      <div className="flex-1 flex items-center justify-center relative w-full">
+        {/* Transcript panel - left side */}
+        {subtitle && (
+          <div className="absolute left-6 top-1/2 -translate-y-1/2 w-64 max-h-[60vh] pointer-events-none">
+            <p className="text-white text-base font-medium text-left leading-relaxed drop-shadow-lg">
+              {subtitle}
+            </p>
+          </div>
+        )}
         <Avatar speaking={isSpeaking} listening={isListening} />
       </div>
 
