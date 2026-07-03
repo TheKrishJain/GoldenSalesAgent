@@ -628,8 +628,8 @@ export default function App() {
       <div className="flex-1 flex items-center justify-center relative w-full">
         {/* Transcript panel - left side */}
         {subtitle && (
-          <div className="absolute left-6 top-1/2 -translate-y-1/2 w-64 max-h-[60vh] pointer-events-none">
-            <p className="text-white text-base font-medium text-left leading-relaxed drop-shadow-lg">
+          <div className="absolute left-10 top-1/2 -translate-y-1/2 w-80 max-h-[70vh] bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-6 overflow-y-auto pointer-events-auto shadow-2xl flex flex-col justify-end">
+            <p className="text-white text-lg font-medium text-left leading-relaxed break-words">
               {subtitle}
             </p>
           </div>
