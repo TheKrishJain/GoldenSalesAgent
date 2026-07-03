@@ -180,7 +180,7 @@ function toPcm16(f: Float32Array) {
 // ─────────────────────────────────────────────────────────
 // App
 // ─────────────────────────────────────────────────────────
-type Phase = 'idle' | 'connecting' | 'ready' | 'listening' | 'speaking';
+type Phase = 'idle' | 'connecting' | 'ready' | 'listening' | 'speaking' | 'processing';
 
 export default function App() {
   // ── State ───────────────────────────────────────────
@@ -463,10 +463,23 @@ export default function App() {
 
     const p = phaseRef.current;
 
-    // Currently listening → stop mic manually
+    // Currently listening → stop mic manually and force submission
     if (p === 'listening') {
       stopMic();
-      setPhase('ready'); setStatus('PRESS TO SPEAK');
+      
+      const sock = wsRef.current;
+      if (sock && sock.readyState === WebSocket.OPEN) {
+        sock.send(JSON.stringify({
+          clientContent: {
+            turnComplete: true
+          }
+        }));
+        setPhase('processing'); 
+        setStatus('PROCESSING...');
+      } else {
+        setPhase('ready'); 
+        setStatus('PRESS TO SPEAK');
+      }
       return;
     }
 
@@ -548,6 +561,7 @@ export default function App() {
   // ── Render ─────────────────────────────────────────
   const isListening  = phase === 'listening';
   const isConnecting = phase === 'connecting';
+  const isProcessing = phase === 'processing';
   const isIdle       = phase === 'idle';
 
   return (
@@ -604,12 +618,12 @@ export default function App() {
         <button
           id="kiosk-mic-btn"
           onClick={handleTap}
-          disabled={isConnecting}
+          disabled={isConnecting || isProcessing}
           className={`w-16 h-16 rounded-full border-2 border-white bg-transparent
             flex items-center justify-center transition-all duration-200
             active:scale-95 outline-none cursor-pointer
             ${isListening  ? 'bg-sky-500/20 border-sky-400' : 'hover:bg-white/10'}
-            ${isConnecting ? 'opacity-40 cursor-not-allowed' : ''}
+            ${isConnecting || isProcessing ? 'opacity-40 cursor-not-allowed' : ''}
             ${isIdle       ? 'animate-pulse' : ''}`}
         >
           {isListening
