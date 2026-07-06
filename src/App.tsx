@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff } from 'lucide-react';
+// import { Mic, MicOff } from 'lucide-react';
 import { buildSystemPromptWithLang } from './toasters';
 import './App.css';
 
