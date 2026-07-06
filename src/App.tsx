@@ -592,10 +592,10 @@ export default function App() {
     <div className="w-screen h-screen relative bg-[#FF0000] text-white select-none overflow-hidden">
       
       {/* 1. MAIN CENTERED CONTAINER (holds all interactive elements) */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-8 pointer-events-none z-[1]" style={{ paddingTop: 20, paddingBottom: 36 }}>
+      <div className="absolute inset-0 flex flex-col items-center justify-between pointer-events-none z-[1]" style={{ paddingTop: 20, paddingBottom: 36 }}>
         
-        {/* TOP CONTROLS (Centered) */}
-        <div className="flex flex-col items-center gap-4 z-10 pointer-events-auto">
+        {/* TOP CONTROLS (Horizontally Centered) */}
+        <div className="flex items-center justify-center gap-8 z-10 pointer-events-auto w-full px-6">
           {/* Language dropdown */}
           <div className="relative">
             <select
@@ -636,7 +636,7 @@ export default function App() {
         </div>
 
         {/* CENTER: Woman avatar */}
-        <div className="flex items-center justify-center relative pointer-events-auto">
+        <div className="flex-1 flex items-center justify-center relative w-full pointer-events-auto my-4">
           <Avatar speaking={isSpeaking} listening={isListening} />
         </div>
 
