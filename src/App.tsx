@@ -662,8 +662,8 @@ export default function App() {
         </div>
       </div>
 
-      {/* 2. OVERLAPPING TOP-RIGHT CONTAINER (z-index 1) */}
-      <div className="absolute top-20 right-6 z-[1] pointer-events-none flex flex-col items-end">
+      {/* 2. OVERLAPPING TOP-RIGHT CONTAINER (z-index 50) */}
+      <div className="fixed top-6 right-6 z-[50] pointer-events-none flex flex-col items-end" style={{ right: '24px', top: '24px' }}>
         {subtitle && (
           <div className="w-[350px] bg-black/60 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-2xl flex flex-col pointer-events-auto">
             <div className="text-[12px] font-black tracking-widest text-white/50 uppercase mb-3 border-b border-white/20 pb-2 text-left shrink-0">
