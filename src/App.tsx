@@ -584,7 +584,7 @@ export default function App() {
     <div className="w-screen h-screen relative bg-[#FF0000] text-white select-none overflow-hidden">
       
       {/* 1. MAIN CENTERED CONTAINER (holds all interactive elements) */}
-      <div className="absolute inset-0 flex flex-col items-center justify-between pointer-events-none" style={{ paddingTop: 20, paddingBottom: 36 }}>
+      <div className="absolute inset-0 flex flex-col items-center justify-between pointer-events-none z-[1] dispaly-inline" style={{ paddingTop: 20, paddingBottom: 36 }}>
         
         {/* TOP BAR */}
         <div className="w-full flex items-center justify-between px-6 z-10 pointer-events-auto">
@@ -654,9 +654,11 @@ export default function App() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                 </svg>
-              : isListening
-                ? <MicOff className="w-8 h-8 text-sky-200" />
-                : <Mic className={`w-8 h-8 text-white ${isIdle ? 'mic-idle' : ''}`} />
+              : <img 
+                  src="/mic.png" 
+                  alt="mic" 
+                  className={`w-[15px] h-[15px] ${isListening ? 'opacity-80' : 'opacity-100'} ${isIdle ? 'mic-idle' : ''}`} 
+                />
             }
           </button>
         </div>
