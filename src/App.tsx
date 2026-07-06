@@ -581,94 +581,101 @@ export default function App() {
   const isSpeaking   = phase === 'speaking';
 
   return (
-    <div className="w-screen h-screen bg-[#FF0000] flex flex-col items-center justify-between select-none overflow-hidden relative" style={{ paddingTop: 20, paddingBottom: 36 }}>
+    <div className="w-screen h-screen relative bg-[#FF0000] text-white select-none overflow-hidden">
+      
+      {/* 1. MAIN CENTERED CONTAINER (holds all interactive elements) */}
+      <div className="absolute inset-0 flex flex-col items-center justify-between pointer-events-none" style={{ paddingTop: 20, paddingBottom: 36 }}>
+        
+        {/* TOP BAR */}
+        <div className="w-full flex items-center justify-between px-6 z-10 pointer-events-auto">
+          {/* Language dropdown - top left */}
+          <div className="relative">
+            <select
+              value={langIdx}
+              onChange={e => switchLang(Number(e.target.value))}
+              className="appearance-none bg-black/30 backdrop-blur-sm text-white font-bold text-xs
+                border border-white/50 rounded-full pl-4 pr-8 py-2
+                cursor-pointer outline-none hover:bg-black/50 focus:border-white transition-all"
+            >
+              {LANGS.map((l, i) => (
+                <option key={l.code} value={i} className="bg-red-700 text-white">{l.label}</option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+              <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+                <path d="M1 1l4 4 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+          </div>
 
-      {/* TOP BAR */}
-      <div className="w-full flex items-center justify-between px-6 z-10">
-        {/* Language dropdown - top left */}
-        <div className="relative">
-          <select
-            value={langIdx}
-            onChange={e => switchLang(Number(e.target.value))}
-            className="appearance-none bg-black/30 backdrop-blur-sm text-white font-bold text-xs
-              border border-white/50 rounded-full pl-4 pr-8 py-2
-              cursor-pointer outline-none hover:bg-black/50 focus:border-white transition-all"
-          >
-            {LANGS.map((l, i) => (
-              <option key={l.code} value={i} className="bg-red-700 text-white">{l.label}</option>
-            ))}
-          </select>
-          <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
-            <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
-              <path d="M1 1l4 4 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+          {/* Detected language badge + End Chat - top right */}
+          <div className="flex items-center gap-3">
+            {langIdx === 0 && detectedLang && detectedLang !== 'English' && (
+              <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm border border-white/40 rounded-full px-3 py-1">
+                <span className="text-[9px] text-white/70 font-bold uppercase tracking-wider">DETECTED</span>
+                <span className="text-xs text-white font-black">{detectedLang}</span>
+              </div>
+            )}
+            {phase !== 'idle' && phase !== 'connecting' && (
+              <button
+                onClick={resetSession}
+                className="px-4 py-2 bg-black/30 hover:bg-black/50 text-white text-xs font-black tracking-widest rounded-full border border-white/50 transition-all backdrop-blur-sm"
+              >
+                END CHAT
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Detected language badge + End Chat - top right */}
-        <div className="flex items-center gap-3">
-          {langIdx === 0 && detectedLang && detectedLang !== 'English' && (
-            <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm border border-white/40 rounded-full px-3 py-1">
-              <span className="text-[9px] text-white/70 font-bold uppercase tracking-wider">DETECTED</span>
-              <span className="text-xs text-white font-black">{detectedLang}</span>
-            </div>
-          )}
-          {phase !== 'idle' && phase !== 'connecting' && (
-            <button
-              onClick={resetSession}
-              className="px-4 py-2 bg-black/30 hover:bg-black/50 text-white text-xs font-black tracking-widest rounded-full border border-white/50 transition-all backdrop-blur-sm"
-            >
-              END CHAT
-            </button>
-          )}
+        {/* CENTER: Woman avatar */}
+        <div className="flex-1 flex items-center justify-center relative w-full pointer-events-auto">
+          <Avatar speaking={isSpeaking} listening={isListening} />
+        </div>
+
+        {/* BOTTOM: Mic + status */}
+        <div className="flex flex-col items-center gap-3 z-10 pointer-events-auto">
+          <canvas ref={canvasRef} width={120} height={24} className="opacity-70" />
+          <span className="text-[11px] font-black tracking-widest text-white/90 uppercase">{status}</span>
+          <button
+            id="kiosk-mic-btn"
+            onClick={handleTap}
+            disabled={isConnecting || isProcessing}
+            className={`w-20 h-20 rounded-full border-2 border-white bg-transparent
+              flex items-center justify-center transition-all duration-200
+              active:scale-95 outline-none cursor-pointer
+              ${isListening  ? 'border-sky-300 bg-sky-500/20' : ''}
+              ${isConnecting || isProcessing ? 'opacity-40 cursor-not-allowed' : ''}`}
+            style={{
+              boxShadow: isIdle ? undefined : isListening ? '0 0 20px rgba(56,189,248,0.5)' : isSpeaking ? '0 0 20px rgba(255,255,255,0.3)' : undefined
+            }}
+          >
+            {isProcessing
+              ? <svg className="processing-spinner w-8 h-8 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                </svg>
+              : isListening
+                ? <MicOff className="w-8 h-8 text-sky-200" />
+                : <Mic className={`w-8 h-8 text-white ${isIdle ? 'mic-idle' : ''}`} />
+            }
+          </button>
         </div>
       </div>
 
-      {/* MAIN: Woman avatar centred + transcript on left */}
-      <div className="flex-1 flex items-center justify-center relative w-full">
-        {/* Transcript panel - left side */}
+      {/* 2. OVERLAPPING TOP-RIGHT CONTAINER (z-index 1) */}
+      <div className="absolute top-20 right-6 z-[1] pointer-events-none flex flex-col items-end">
         {subtitle && (
-          <div className="absolute left-10 top-1/2 -translate-y-1/2 w-80 max-h-[70vh] bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-6 overflow-y-auto pointer-events-auto shadow-2xl flex flex-col justify-end">
-            <p className="text-white text-lg font-medium text-left leading-relaxed break-words">
-              {subtitle}
-            </p>
+          <div className="w-[350px] max-h-[60vh] bg-black/60 backdrop-blur-md border border-white/20 rounded-2xl p-5 overflow-hidden shadow-2xl flex flex-col pointer-events-auto">
+            <div className="text-[12px] font-black tracking-widest text-white/50 uppercase mb-3 border-b border-white/20 pb-2 text-left">
+              Live Transcript
+            </div>
+            <div className="overflow-y-auto w-full flex-1 pr-2">
+              <p className="text-white text-[15px] font-medium text-left leading-relaxed break-words" style={{ wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
+                {subtitle}
+              </p>
+            </div>
           </div>
         )}
-        <Avatar speaking={isSpeaking} listening={isListening} />
-      </div>
-
-      {/* BOTTOM: Mic + status */}
-      <div className="flex flex-col items-center gap-3 z-10">
-        {/* Visualiser */}
-        <canvas ref={canvasRef} width={120} height={24} className="opacity-70" />
-
-        {/* Status label */}
-        <span className="text-[11px] font-black tracking-widest text-white/90 uppercase">{status}</span>
-
-        {/* Mic button */}
-        <button
-          id="kiosk-mic-btn"
-          onClick={handleTap}
-          disabled={isConnecting || isProcessing}
-          className={`w-20 h-20 rounded-full border-2 border-white bg-transparent
-            flex items-center justify-center transition-all duration-200
-            active:scale-95 outline-none cursor-pointer
-            ${isListening  ? 'border-sky-300 bg-sky-500/20' : ''}
-            ${isConnecting || isProcessing ? 'opacity-40 cursor-not-allowed' : ''}`}
-          style={{
-            boxShadow: isIdle ? undefined : isListening ? '0 0 20px rgba(56,189,248,0.5)' : isSpeaking ? '0 0 20px rgba(255,255,255,0.3)' : undefined
-          }}
-        >
-          {isProcessing
-            ? <svg className="processing-spinner w-8 h-8 text-white" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-              </svg>
-            : isListening
-              ? <MicOff className="w-8 h-8 text-sky-200" />
-              : <Mic className={`w-8 h-8 text-white ${isIdle ? 'mic-idle' : ''}`} />
-          }
-        </button>
       </div>
 
     </div>
