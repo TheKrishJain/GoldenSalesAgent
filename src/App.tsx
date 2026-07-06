@@ -665,13 +665,22 @@ export default function App() {
       {/* 2. OVERLAPPING TOP-RIGHT CONTAINER (z-index 1) */}
       <div className="absolute top-20 right-6 z-[1] pointer-events-none flex flex-col items-end">
         {subtitle && (
-          <div className="w-[350px] max-h-[60vh] bg-black/60 backdrop-blur-md border border-white/20 rounded-2xl p-5 overflow-hidden shadow-2xl flex flex-col pointer-events-auto">
-            <div className="text-[12px] font-black tracking-widest text-white/50 uppercase mb-3 border-b border-white/20 pb-2 text-left">
+          <div className="w-[350px] bg-black/60 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-2xl flex flex-col pointer-events-auto">
+            <div className="text-[12px] font-black tracking-widest text-white/50 uppercase mb-3 border-b border-white/20 pb-2 text-left shrink-0">
               Live Transcript
             </div>
-            <div className="overflow-y-auto w-full flex-1 pr-2">
+            {/* 122px is exactly 5 lines of 15px text with 1.625 line height */}
+            <div className="overflow-y-auto w-full max-h-[122px] pr-2 scrollable-transcript">
               <p className="text-white text-[15px] font-medium text-left leading-relaxed break-words" style={{ wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
-                {subtitle}
+                {(() => {
+                  const words = subtitle.split(/\s+/);
+                  let res = '';
+                  for (let i = 0; i < words.length; i++) {
+                    res += words[i] + ' ';
+                    if ((i + 1) % 5 === 0) res += '\n';
+                  }
+                  return res.trim();
+                })()}
               </p>
             </div>
           </div>
