@@ -25,32 +25,33 @@ Listen to the language the customer is speaking and ALWAYS respond in that exact
 - Customer speaks Marathi (मराठी) → YOU respond ONLY in Marathi
 Never mix languages. Never respond in a different language than the customer used.
 IMPORTANT: While your AUDIO must match the customer's language, your TEXT response (the text part) MUST ALWAYS BE TRANSLATED TO ENGLISH. No matter what language you are speaking in, output English text.
-If the customer switches language mid-conversation, you switch too immediately.`,
+If the customer switches language mid-conversation, you switch too immediately.
+CRITICAL: Never repeat your greeting. After your first greeting, engage naturally in conversation.`,
     greetText:
       'Greet the customer warmly in Hindi only. Say hello, ask how you can help them choose a product today, and explicitly tell them they can speak to you in Hindi, English, or Marathi.',
   },
   {
     code: 'en',
     label: 'English',
-    instruction: 'You MUST respond ONLY in English. Do not use any other language under any circumstance.',
+    instruction: 'You MUST respond ONLY in English. Do not use any other language under any circumstance.\nCRITICAL: Never repeat your greeting. After your first greeting, engage naturally in conversation.',
     greetText:
-      'Greet the customer warmly in English and offer to help them choose a toaster or washing machine.',
+      'Greet the customer warmly in Hindi only. Say hello and offer to help them choose a toaster or washing machine.',
   },
   {
     code: 'hi',
     label: 'हिंदी (Hindi)',
     instruction:
-      'तुम्हें केवल हिंदी में जवाब देना है। चाहे ग्राहक किसी भी भाषा में बोले, तुम हमेशा हिंदी में जवाब दो।',
+      'तुम्हें केवल हिंदी में जवाब देना है। चाहे ग्राहक किसी भी भाषा में बोले, तुम हमेशा हिंदी में जवाब दो।\nCRITICAL: Never repeat your greeting. After your first greeting, engage naturally in conversation.',
     greetText:
-      'ग्राहक का हिंदी में गर्मजोशी से स्वागत करें और टोस्टर या वाशिंग मशीन चुनने में मदद की पेशकश करें।',
+      'Greet the customer warmly in Hindi only. Say hello and offer to help them choose a toaster or washing machine.',
   },
   {
     code: 'mr',
     label: 'मराठी (Marathi)',
     instruction:
-      'तुम्ही फक्त मराठीत उत्तर द्यायचे आहे। ग्राहक कोणत्याही भाषेत बोलला तरी तुम्ही नेहमी मराठीतच उत्तर द्या.',
+      'तुम्ही फक्त मराठीत उत्तर द्यायचे आहे। ग्राहक कोणत्याही भाषेत बोलला तरी तुम्ही नेहमी मराठीतच उत्तर द्या.\nCRITICAL: Never repeat your greeting. After your first greeting, engage naturally in conversation.',
     greetText:
-      'ग्राहकाचे मराठीत उत्साहाने स्वागत करा आणि टोस्टर किंवा वॉशिंग मशीन निवडण्यात मदत करण्याची ऑफर द्या.',
+      'Greet the customer warmly in Hindi only. Say hello and offer to help them choose a toaster or washing machine.',
   },
 ];
 
@@ -522,8 +523,15 @@ export default function App() {
           turnComplete: true
         }
       }));
-      setStatus('...');
-      return; // wait for Maya to finish; user taps again to speak
+      
+      // Start microphone immediately so user can speak right after (or during) greeting
+      try {
+        await startMic();
+        setPhase('listening'); setStatus('LISTENING...');
+      } catch {
+        setStatus('MIC ERROR – TAP AGAIN');
+      }
+      return;
     }
 
     // ── SUBSEQUENT TAPS: open mic and stream ──────────
