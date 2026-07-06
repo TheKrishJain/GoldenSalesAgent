@@ -24,35 +24,16 @@ Listen to the language the customer is speaking and ALWAYS respond in that exact
 - Customer speaks Hindi (हिंदी) → YOU respond ONLY in Hindi
 - Customer speaks Marathi (मराठी) → YOU respond ONLY in Marathi
 Never mix languages. Never respond in a different language than the customer used.
-IMPORTANT: While your AUDIO must match the customer's language, your TEXT response (the text part) MUST ALWAYS BE TRANSLATED TO ENGLISH. No matter what language you are speaking in, output English text.
-If the customer switches language mid-conversation, you switch too immediately.
+
+CRITICAL TEXT RULE: Your text response must contain NO INTERNAL THOUGHTS. Do not use <thought> tags. You must output ONLY this exact format:
+[DETECTED: <Language>] <English Translation of your audio>
+Example: [DETECTED: Hindi] Hello, how can I help you today?
+Example: [DETECTED: English] Sure, let me show you some toasters.
+
 CRITICAL: Never repeat your greeting. After your first greeting, engage naturally in conversation.`,
     greetText:
-      'Greet the customer warmly in Hindi only. Say hello, ask how you can help them choose a product today, and explicitly tell them they can speak to you in Hindi, English, or Marathi.',
-  },
-  {
-    code: 'en',
-    label: 'English',
-    instruction: 'You MUST respond ONLY in English. Do not use any other language under any circumstance.\nCRITICAL: Never repeat your greeting. After your first greeting, engage naturally in conversation.',
-    greetText:
-      'Greet the customer warmly in Hindi only. Say hello and offer to help them choose a toaster or washing machine.',
-  },
-  {
-    code: 'hi',
-    label: 'हिंदी (Hindi)',
-    instruction:
-      'तुम्हें केवल हिंदी में जवाब देना है। चाहे ग्राहक किसी भी भाषा में बोले, तुम हमेशा हिंदी में जवाब दो।\nCRITICAL: Never repeat your greeting. After your first greeting, engage naturally in conversation.',
-    greetText:
-      'Greet the customer warmly in Hindi only. Say hello and offer to help them choose a toaster or washing machine.',
-  },
-  {
-    code: 'mr',
-    label: 'मराठी (Marathi)',
-    instruction:
-      'तुम्ही फक्त मराठीत उत्तर द्यायचे आहे। ग्राहक कोणत्याही भाषेत बोलला तरी तुम्ही नेहमी मराठीतच उत्तर द्या.\nCRITICAL: Never repeat your greeting. After your first greeting, engage naturally in conversation.',
-    greetText:
-      'Greet the customer warmly in Hindi only. Say hello and offer to help them choose a toaster or washing machine.',
-  },
+      'Greet the customer warmly in Hindi only. Say hello, ask how you can help them choose a product today, and explicitly tell them they can speak to you in Hindi, English, or Marathi. Remember to follow the CRITICAL TEXT RULE.',
+  }
 ];
 
 // ─────────────────────────────────────────────────────────
@@ -120,31 +101,26 @@ class AudioPlayer {
 // ─────────────────────────────────────────────────────────
 function Avatar({ speaking, listening }: { speaking: boolean; listening: boolean }) {
   return (
-    <div className="relative flex items-end justify-center" style={{ width: 200, height: 300 }}>
+    <div className="avatar-container" style={{ width: 200, height: 300 }}>
       {/* Ripple rings under/around the image when speaking */}
       {speaking && (
         <>
-          <div className="speaking-ring-1 absolute bottom-0 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full border-2 border-white/40" />
-          <div className="speaking-ring-2 absolute bottom-0 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full border-2 border-white/30" />
-          <div className="speaking-ring-3 absolute bottom-0 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full border-2 border-white/20" />
+          <div className="speaking-ring-1 ring-base ring-40" />
+          <div className="speaking-ring-2 ring-base ring-30" />
+          <div className="speaking-ring-3 ring-base ring-20" />
         </>
       )}
       {/* Glow ring when listening */}
       {listening && (
-        <div className="listening-ring absolute bottom-0 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full border-2 border-sky-300/60" />
+        <div className="listening-ring ring-base ring-sky" />
       )}
       {/* Woman PNG image - no clip, shows naturally */}
       <img
         src="/maya.png"
         alt="Maya"
-        className="avatar-float relative z-10"
+        className="avatar-img avatar-float"
         style={{
-          width: 200,
-          height: 280,
-          objectFit: 'contain',
-          objectPosition: 'center bottom',
           filter: speaking ? 'drop-shadow(0 0 20px rgba(255,255,255,0.5))' : 'drop-shadow(0 8px 24px rgba(0,0,0,0.3))',
-          transition: 'filter 0.3s ease',
         }}
       />
     </div>
@@ -214,46 +190,12 @@ export default function App() {
   const micWorklet  = useRef<AudioWorkletNode | null>(null);
   const micAnal     = useRef<AnalyserNode | null>(null);
   const subTimer    = useRef<number | null>(null);
-  const sttRef      = useRef<any>(null);
-
-  // Initialize Web Speech API for transcribing Maya
-  useEffect(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      const rec = new SpeechRecognition();
-      rec.continuous = true;
-      rec.interimResults = true;
-      rec.lang = 'en-US'; // User requested English only
-      rec.onresult = (e: any) => {
-        let text = '';
-        for (let i = e.resultIndex; i < e.results.length; ++i) {
-          text += e.results[i][0].transcript;
-        }
-        setSubtitle(text);
-      };
-      sttRef.current = rec;
-    }
-  }, []);
 
   // Keep langIdxRef in sync
   useEffect(() => { langIdxRef.current = langIdx; }, [langIdx]);
 
   function setPhase(p: Phase) { phaseRef.current = p; setPhaseS(p); }
 
-  // Detect language from Maya's text response (Unicode range check)
-  function detectLangFromText(text: string): string {
-    const devanagari = (text.match(/[\u0900-\u097F]/g) || []).length;
-    if (devanagari === 0) return 'English';
-    // Marathi-specific characters that rarely appear in Hindi
-    const marathiSpecific = (text.match(/[\u0965\u0902\u093E\u093F\u0940\u094D]/g) || []).length;
-    // Simple heuristic: check for common Marathi-only words
-    const hasMarathi = /आहे|नाही|करा|द्या|आणि|किंवा|मदत/.test(text);
-    const hasHindi   = /है|नहीं|करें|और|या|मदद|आप/.test(text);
-    if (hasMarathi && !hasHindi) return 'मराठी';
-    if (hasHindi)  return 'हिंदी';
-    if (marathiSpecific > 2) return 'मराठी';
-    return 'हिंदी'; // default Devanagari to Hindi
-  }
 
   // ── Audio output callback ──────────────────────────
   useEffect(() => {
@@ -261,11 +203,9 @@ export default function App() {
       if (on) {
         setPhase('speaking');
         setStatus('MAYA IS SPEAKING...');
-        setSubtitle('');
-        try { sttRef.current?.start(); } catch (_) {}
+        // subtitle is not cleared here so it builds up continuously for the turn
       } else {
         if (phaseRef.current === 'speaking') {
-          try { sttRef.current?.stop(); } catch (_) {}
           // Automatically open the mic and start listening again
           startMic().then(() => {
             setPhase('listening');
@@ -274,9 +214,7 @@ export default function App() {
             setPhase('ready');
             setStatus('PRESS TO SPEAK');
           });
-          // Clear subtitle after 4 s
-          if (subTimer.current) clearTimeout(subTimer.current);
-          subTimer.current = window.setTimeout(() => setSubtitle(''), 4000);
+          // Removed 4-second timeout so the transcript stays visible
         }
       }
     };
@@ -357,26 +295,27 @@ export default function App() {
           // Audio from Maya
           const parts: any[] = msg.serverContent?.modelTurn?.parts ?? [];
           for (const p of parts) {
-            if (p.inlineData?.data) {
+            // As soon as we receive any data (audio or text) for a new turn, switch to speaking and clear the old subtitle
+            if (p.inlineData?.data || p.text) {
               if (phaseRef.current !== 'speaking') {
                 setPhase('speaking');
                 setStatus('MAYA IS SPEAKING...');
                 setSubtitle('');
               }
+            }
+            if (p.inlineData?.data) {
               player.current.enqueue(p.inlineData.data);
             }
             if (p.text) {
-              // In auto mode, detect and display which language Maya responded in
-              if (langIdxRef.current === 0) {
-                setDetectedLang(detectLangFromText(p.text));
+              let textChunk = p.text;
+              // Extract [DETECTED: language] from text
+              const match = textChunk.match(/\[DETECTED:\s*([^\]]+)\]/i);
+              if (match) {
+                setDetectedLang(match[1].toUpperCase());
+                textChunk = textChunk.replace(/\[DETECTED:\s*([^\]]+)\]/i, '').trim();
               }
+              setSubtitle(prev => (prev + ' ' + textChunk).trim().slice(-2000));
             }
-          }
-
-          // Real-time English transcript from Gemini's built-in transcription
-          const transcript = msg.serverContent?.outputTranscription?.text;
-          if (transcript) {
-            setSubtitle(prev => (prev + transcript).slice(-400));
           }
         } catch (_) { /* ignore parse errors */ }
       };
@@ -458,7 +397,6 @@ export default function App() {
     setDetectedLang('');
     player.current.stop();
     stopMic();
-    try { sttRef.current?.stop(); } catch (_) {}
     killWs();
     greetedRef.current = false;
     setSubtitle('');
@@ -485,8 +423,10 @@ export default function App() {
       
       const sock = wsRef.current;
       if (sock && sock.readyState === WebSocket.OPEN) {
+        // Send turnComplete to force Gemini to respond now
         sock.send(JSON.stringify({
           clientContent: {
+            turns: [],
             turnComplete: true
           }
         }));
@@ -589,27 +529,25 @@ export default function App() {
   const isSpeaking   = phase === 'speaking';
 
   return (
-    <div className="w-screen h-screen relative bg-[#FF0000] text-white select-none overflow-hidden">
+    <div className="app-container">
       
       {/* 1. MAIN CENTERED CONTAINER (holds all interactive elements) */}
-      <div className="absolute inset-0 flex flex-col items-center justify-between pointer-events-none z-[1]" style={{ paddingTop: 20, paddingBottom: 36 }}>
+      <div className="app-main">
         
         {/* TOP CONTROLS (Horizontally Centered) */}
-        <div className="flex items-center justify-center gap-8 z-10 pointer-events-auto w-full px-6">
+        <div className="top-controls">
           {/* Language dropdown */}
-          <div className="relative">
+          <div className="lang-dropdown">
             <select
               value={langIdx}
               onChange={e => switchLang(Number(e.target.value))}
-              className="appearance-none bg-black/30 backdrop-blur-sm text-white font-bold text-xs
-                border border-white/50 rounded-full pl-6 pr-10 py-2.5
-                cursor-pointer outline-none hover:bg-black/50 focus:border-white transition-all shadow-lg"
+              className="lang-select"
             >
               {LANGS.map((l, i) => (
-                <option key={l.code} value={i} className="bg-red-700 text-white">{l.label}</option>
+                <option key={l.code} value={i} className="lang-option">{l.label}</option>
               ))}
             </select>
-            <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2">
+            <div className="dropdown-arrow">
               <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
                 <path d="M1 1l4 4 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
@@ -617,17 +555,17 @@ export default function App() {
           </div>
 
           {/* Detected language badge + End Chat */}
-          <div className="flex items-center gap-4">
+          <div className="actions-group">
             {langIdx === 0 && detectedLang && detectedLang !== 'English' && (
-              <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm border border-white/40 rounded-full px-3 py-1 shadow-lg">
-                <span className="text-[10px] text-white/80 font-bold uppercase tracking-wider">DETECTED</span>
-                <span className="text-xs text-white font-black">{detectedLang}</span>
+              <div className="detected-badge">
+                <span className="detected-label">DETECTED</span>
+                <span className="detected-value">{detectedLang}</span>
               </div>
             )}
             {phase !== 'idle' && phase !== 'connecting' && (
               <button
                 onClick={resetSession}
-                className="px-5 py-2 bg-black/40 hover:bg-black/60 text-white text-[11px] font-black tracking-widest rounded-full border border-white/50 transition-all backdrop-blur-sm shadow-lg uppercase"
+                className="end-chat-btn"
               >
                 End Chat
               </button>
@@ -636,64 +574,53 @@ export default function App() {
         </div>
 
         {/* CENTER: Woman avatar */}
-        <div className="flex-1 flex items-center justify-center relative w-full pointer-events-auto my-4">
+        <div className="avatar-wrapper">
           <Avatar speaking={isSpeaking} listening={isListening} />
         </div>
 
         {/* BOTTOM: Mic + status */}
-        <div className="flex flex-col items-center gap-3 z-10 pointer-events-auto">
-          <canvas ref={canvasRef} width={120} height={24} className="opacity-70" />
-          <span className="text-[11px] font-black tracking-widest text-white/90 uppercase">{status}</span>
+        <div className="bottom-controls">
+          <canvas ref={canvasRef} width={120} height={24} className="visualizer-canvas" />
+          <span className="status-text">{status}</span>
           <button
             id="kiosk-mic-btn"
             onClick={handleTap}
             disabled={isConnecting || isProcessing}
-            className={`w-16 h-16 bg-transparent border-0
-              flex items-center justify-center transition-all duration-200
-              active:scale-95 outline-none cursor-pointer
-              ${isConnecting || isProcessing ? 'opacity-40 cursor-not-allowed' : 'hover:scale-110'}`}
+            className={`mic-btn ${isConnecting || isProcessing ? 'mic-disabled' : 'mic-active'}`}
           >
             {isProcessing
-              ? <svg className="processing-spinner w-8 h-8 text-white" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              ? <svg className="processing-spinner spinner-icon" fill="none" viewBox="0 0 24 24">
+                  <circle className="spinner-bg" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                  <path className="spinner-fg" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                 </svg>
               : isListening
-                ? <MicOff className="w-10 h-10 text-white" />
-                : <Mic className={`w-10 h-10 text-white ${isIdle ? 'mic-idle' : ''}`} />
+                ? <MicOff className="mic-icon" />
+                : <Mic className={`mic-icon ${isIdle ? 'mic-idle' : ''}`} />
             }
           </button>
         </div>
       </div>
 
       {/* 2. OVERLAPPING TOP-RIGHT KPI CONTAINER (z-index 50) */}
-      <div className="fixed top-8 right-8 z-[50] pointer-events-none flex flex-col items-end">
+      <div className="kpi-container">
         {subtitle && (
-          <div className="w-[380px] bg-white rounded-3xl p-6 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] flex flex-col pointer-events-auto border border-gray-100">
+          <div className="kpi-card">
             {/* KPI Header */}
-            <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3 shrink-0">
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.6)]"></div>
-                <div className="text-[13px] font-black tracking-widest text-gray-400 uppercase">
+            <div className="kpi-header">
+              <div className="kpi-title-group">
+                <div className="kpi-dot"></div>
+                <div className="kpi-title">
                   Live KPI
                 </div>
               </div>
-              <div className="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider">
+              <div className="kpi-tag">
                 Transcript
               </div>
             </div>
             {/* 122px is exactly 5 lines of 15px text with 1.625 line height */}
-            <div className="overflow-y-auto w-full max-h-[122px] pr-2 scrollable-transcript">
-              <p className="text-gray-800 text-[15px] font-semibold text-left leading-relaxed break-words" style={{ wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
-                {(() => {
-                  const words = subtitle.split(/\s+/);
-                  let res = '';
-                  for (let i = 0; i < words.length; i++) {
-                    res += words[i] + ' ';
-                    if ((i + 1) % 5 === 0) res += '\n';
-                  }
-                  return res.trim();
-                })()}
+            <div className="kpi-transcript-box scrollable-transcript">
+              <p className="kpi-transcript-text">
+                {subtitle.replace(/<thought>[\s\S]*?(<\/thought>|$)/gi, '').trim()}
               </p>
             </div>
           </div>
