@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-// import { Mic, MicOff } from 'lucide-react';
+import { Mic, MicOff } from 'lucide-react';
 import { buildSystemPromptWithLang } from './toasters';
 import './App.css';
 
@@ -584,51 +584,51 @@ export default function App() {
     <div className="w-screen h-screen relative bg-[#FF0000] text-white select-none overflow-hidden">
       
       {/* 1. MAIN CENTERED CONTAINER (holds all interactive elements) */}
-      <div className="absolute inset-0 flex flex-col items-center justify-between pointer-events-none z-[1] dispaly-inline" style={{ paddingTop: 20, paddingBottom: 36 }}>
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-8 pointer-events-none z-[1]" style={{ paddingTop: 20, paddingBottom: 36 }}>
         
-        {/* TOP BAR */}
-        <div className="w-full flex items-center justify-between px-6 z-10 pointer-events-auto">
-          {/* Language dropdown - top left */}
+        {/* TOP CONTROLS (Centered) */}
+        <div className="flex flex-col items-center gap-4 z-10 pointer-events-auto">
+          {/* Language dropdown */}
           <div className="relative">
             <select
               value={langIdx}
               onChange={e => switchLang(Number(e.target.value))}
               className="appearance-none bg-black/30 backdrop-blur-sm text-white font-bold text-xs
-                border border-white/50 rounded-full pl-4 pr-8 py-2
-                cursor-pointer outline-none hover:bg-black/50 focus:border-white transition-all"
+                border border-white/50 rounded-full pl-6 pr-10 py-2.5
+                cursor-pointer outline-none hover:bg-black/50 focus:border-white transition-all shadow-lg"
             >
               {LANGS.map((l, i) => (
                 <option key={l.code} value={i} className="bg-red-700 text-white">{l.label}</option>
               ))}
             </select>
-            <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+            <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2">
               <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
                 <path d="M1 1l4 4 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
           </div>
 
-          {/* Detected language badge + End Chat - top right */}
-          <div className="flex items-center gap-3">
+          {/* Detected language badge + End Chat */}
+          <div className="flex items-center gap-4">
             {langIdx === 0 && detectedLang && detectedLang !== 'English' && (
-              <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm border border-white/40 rounded-full px-3 py-1">
-                <span className="text-[9px] text-white/70 font-bold uppercase tracking-wider">DETECTED</span>
+              <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm border border-white/40 rounded-full px-3 py-1 shadow-lg">
+                <span className="text-[10px] text-white/80 font-bold uppercase tracking-wider">DETECTED</span>
                 <span className="text-xs text-white font-black">{detectedLang}</span>
               </div>
             )}
             {phase !== 'idle' && phase !== 'connecting' && (
               <button
                 onClick={resetSession}
-                className="px-4 py-2 bg-black/30 hover:bg-black/50 text-white text-xs font-black tracking-widest rounded-full border border-white/50 transition-all backdrop-blur-sm"
+                className="px-5 py-2 bg-black/40 hover:bg-black/60 text-white text-[11px] font-black tracking-widest rounded-full border border-white/50 transition-all backdrop-blur-sm shadow-lg uppercase"
               >
-                END CHAT
+                End Chat
               </button>
             )}
           </div>
         </div>
 
         {/* CENTER: Woman avatar */}
-        <div className="flex-1 flex items-center justify-center relative w-full pointer-events-auto">
+        <div className="flex items-center justify-center relative pointer-events-auto">
           <Avatar speaking={isSpeaking} listening={isListening} />
         </div>
 
@@ -640,40 +640,43 @@ export default function App() {
             id="kiosk-mic-btn"
             onClick={handleTap}
             disabled={isConnecting || isProcessing}
-            className={`w-20 h-20 rounded-full border-2 border-white bg-transparent
+            className={`w-16 h-16 bg-transparent border-0
               flex items-center justify-center transition-all duration-200
               active:scale-95 outline-none cursor-pointer
-              ${isListening  ? 'border-sky-300 bg-sky-500/20' : ''}
-              ${isConnecting || isProcessing ? 'opacity-40 cursor-not-allowed' : ''}`}
-            style={{
-              boxShadow: isIdle ? undefined : isListening ? '0 0 20px rgba(56,189,248,0.5)' : isSpeaking ? '0 0 20px rgba(255,255,255,0.3)' : undefined
-            }}
+              ${isConnecting || isProcessing ? 'opacity-40 cursor-not-allowed' : 'hover:scale-110'}`}
           >
             {isProcessing
               ? <svg className="processing-spinner w-8 h-8 text-white" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                 </svg>
-              : <img 
-                  src="/mic.png" 
-                  alt="mic" 
-                  className={`w-[15px] h-[15px] ${isListening ? 'opacity-80' : 'opacity-100'} ${isIdle ? 'mic-idle' : ''}`} 
-                />
+              : isListening
+                ? <MicOff className="w-10 h-10 text-white" />
+                : <Mic className={`w-10 h-10 text-white ${isIdle ? 'mic-idle' : ''}`} />
             }
           </button>
         </div>
       </div>
 
-      {/* 2. OVERLAPPING TOP-RIGHT CONTAINER (z-index 50) */}
-      <div className="fixed top-6 right-6 z-[50] pointer-events-none flex flex-col items-end" style={{ right: '24px', top: '24px' }}>
+      {/* 2. OVERLAPPING TOP-RIGHT KPI CONTAINER (z-index 50) */}
+      <div className="fixed top-8 right-8 z-[50] pointer-events-none flex flex-col items-end">
         {subtitle && (
-          <div className="w-[350px] bg-black/60 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-2xl flex flex-col pointer-events-auto">
-            <div className="text-[12px] font-black tracking-widest text-white/50 uppercase mb-3 border-b border-white/20 pb-2 text-left shrink-0">
-              Live Transcript
+          <div className="w-[380px] bg-white rounded-3xl p-6 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] flex flex-col pointer-events-auto border border-gray-100">
+            {/* KPI Header */}
+            <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3 shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.6)]"></div>
+                <div className="text-[13px] font-black tracking-widest text-gray-400 uppercase">
+                  Live KPI
+                </div>
+              </div>
+              <div className="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider">
+                Transcript
+              </div>
             </div>
             {/* 122px is exactly 5 lines of 15px text with 1.625 line height */}
             <div className="overflow-y-auto w-full max-h-[122px] pr-2 scrollable-transcript">
-              <p className="text-white text-[15px] font-medium text-left leading-relaxed break-words" style={{ wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
+              <p className="text-gray-800 text-[15px] font-semibold text-left leading-relaxed break-words" style={{ wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
                 {(() => {
                   const words = subtitle.split(/\s+/);
                   let res = '';
